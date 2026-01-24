@@ -1,0 +1,79 @@
+-- In the beginning was the void, a silent schema,
+-- neither table nor row, only potential.
+
+CREATE DATABASE genesis
+    WITH OWNER = poet
+         ENCODING = 'UTF8'
+         TEMPLATE = template0
+         CONNECTION LIMIT = -1;
+
+\c genesis
+
+-- And the poet said: Let there be light,
+-- and light was a table called stars.
+
+CREATE TABLE stars (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    magnitude NUMERIC(4,2) CHECK (magnitude BETWEEN -26.74 AND 30.0),
+    constellation VARCHAR(80),
+    distance_ly NUMERIC NOT NULL CHECK (distance_ly > 0),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Then the poet separated the waters above from the waters below,
+-- and called the space between them sky.
+
+CREATE TABLE oceans (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    depth_m INTEGER CHECK (depth_m > 0),
+    surface_area_km2 NUMERIC NOT NULL,
+    contains_plastic BOOLEAN DEFAULT true
+);
+
+-- And the dry land appeared, and the poet called it earth.
+
+CREATE TABLE continents (
+    id SMALLINT PRIMARY KEY,
+    name VARCHAR(20) UNIQUE NOT NULL,
+    area_km2 BIGINT NOT NULL,
+    population BIGINT,
+    tectonic_plate VARCHAR(40)
+);
+
+-- Let the earth bring forth living creatures after their kind.
+
+CREATE TABLE creatures (
+    id BIGSERIAL PRIMARY KEY,
+    species VARCHAR(150) NOT NULL,
+    kingdom VARCHAR(20) CHECK (kingdom IN ('Animalia','Plantae','Fungi','Protista','Monera')),
+    extinct BOOLEAN DEFAULT false,
+    last_sighted TIMESTAMPTZ,
+    habitat GEOMETRY(POLYGON, 4326)  -- because even poetry needs SRID 4326
+);
+
+-- And the poet made two great lights.
+
+INSERT INTO stars (name, magnitude, constellation, distance_ly) VALUES
+    ('Sun', -26.74, 'Local Interstellar Cloud', 0.000015813),
+    ('Sirius', -1.46, 'Canis Major', 8.6),
+    ('Proxima Centauri', 11.01, 'Centaurus', 4.24);
+
+-- Then the poet rested, but added an index first,
+-- because even on the seventh day, queries must be fast.
+
+CREATE INDEX ix_stars_magnitude ON stars(magnitude);
+CREATE INDEX ix_creatures_habitat ON creatures USING GIST(habitat);
+
+-- And the poet looked upon the database and saw that it was good.
+-- Yet something was missing: the observer.
+
+CREATE ROLE human WITH LOGIN PASSWORD 'curiosity';
+GRANT ALL PRIVILEGES ON DATABASE genesis TO human;
+
+-- And the poet whispered:
+-- "Ask, and it shall be queried unto you."
+
+-- Finis, amen, commit;
+COMMIT;
