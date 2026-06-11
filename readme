@@ -11,8 +11,3 @@ In essence, this repo is a **meta-tool** — a sandbox of ideas, prompts, data s
 - **Self-Referential Examination**: Modern AIs often operate within narrow context windows. This repo aggregates persistent, high-signal context to allow deeper introspection on how AIs reason, hallucinate, create, and "think."
 - **Creation Database Integration**: Ties directly into the broader [Creation Database / Creation Theorem](https://github.com/Xplorer04/creation-database) (or related mythos projects). It acts as fuel for surrealist philosophy, number machines, vector soups, and cosmic myth-building.
 - **For Human-AI Collaboration**: Helps creators like @Xplorer04 explore the boundaries of AI cognition — stripping pretentious "false essence," embracing uncertainty ("The Only Certainty Is Uncertainty"), and generating chaotic, depth-revealing output.
-
-## How to Use This Repo as AI Context
-
-1. **Feed to Models**: Copy relevant sections, files, or the entire repo structure into your AI's context (via RAG, long-context models, or custom prompts).
-2. **Prompt Template**:
