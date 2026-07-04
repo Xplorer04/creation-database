@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PARADOX ENGINE</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --void: #0A0A0A;
+    --bone: #E8E0D0;
+    --wire: #7FFF00;
+    --amber: #3D2B1F;
+    --rupture: #FF3333;
+    --dim: #4A4A4A;
+  }
+
+  body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 64px;
+    position: relative;
+  }
+
+  .header-label {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .header-title {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--bone);
+  }
+
+  .header-title .accent {
+    color: var(--wire);
+  }
+
+  .terminal {
+    width: 100%;
+    max-width: 680px;
+    min-height: 220px;
+    background: #0F0F0F;
+    border: 1px solid #1E1E1E;
+    padding: 28px 32px;
+    position: relative;
+    margin-bottom: 32px;
+  }
+
+  .terminal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--wire);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .terminal.active::before {
+    opacity: 1;
+  }
+
+  .terminal-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--dim);
+  }
+
+  .dot.live { background: var(--wire); }
+
+  .prompt-line {
+    font-size: 11px;
+    color: var(--dim);
+    margin-bottom: 20px;
+    letter-spacing: 0.1em;
+  }
+
+  .prompt-line .cursor-blink {
+    color: var(--wire);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .output-text {
+    font-size: clamp(15px, 2.5vw, 19px);
+    line-height: 1.65;
+    color: var(--bone);
+    font-style: italic;
+    min-height: 80px;
+    transition: opacity 0.15s;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .output-text.typing { opacity: 0.9; }
+
+  .output-text .highlight {
+    color: var(--wire);
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .output-text .rupture {
+    color: var(--rupture);
+    font-style: normal;
+  }
+
+  .meta-line {
+    margin-top: 20px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .meta-line .seed-id {
+    color: var(--amber);
+    filter: brightness(2.5);
+  }
+
+  .controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-run {
+    background: var(--void);
+    border: 1px solid var(--wire);
+    color: var(--wire);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 14px 36px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-run::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--wire);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .btn-run:hover { background: var(--wire); color: var(--void); }
+  .btn-run:active { transform: scale(0.97); }
+  .btn-run:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-run:disabled:hover { background: var(--void); color: var(--wire); }
+
+  .btn-copy {
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .btn-copy:hover { border-color: var(--bone); color: var(--bone); }
+
+  .count-display {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.2em;
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  .count-display span { color: var(--wire); }
+
+  .glitch {
+    animation: glitch 0.08s steps(1) 3;
+  }
+
+  @keyframes glitch {
+    0%   { clip-path: inset(30% 0 50% 0); transform: translate(-4px, 0); color: var(--rupture); }
+    33%  { clip-path: inset(70% 0 10% 0); transform: translate(3px, 0); }
+    66%  { clip-path: inset(10% 0 80% 0); transform: translate(0, 0); }
+    100% { clip-path: none; transform: none; color: inherit; }
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glitch, .cursor-blink { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+
+<header class="header">
+  <div class="header-label">xplorer04 / creation-database</div>
+  <h1 class="header-title">PARADOX<span class="accent">_</span>ENGINE</h1>
+</header>
+
+<div class="terminal" id="terminal">
+  <div class="terminal-bar">
+    <div class="dot live" id="dot-live"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <div class="prompt-line">$ run seed --compress --deploy<span class="cursor-blink">█</span></div>
+  <div class="output-text" id="output">
+    <span class="highlight">awaiting compression event.</span>
+    
+the pixel that refuses to be averaged
+is already the theorem.
+  </div>
+  <div class="meta-line">
+    <span>CREATION_THEOREM v∞</span>
+    <span class="seed-id" id="seed-id">SEED::BOOT</span>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn-run" id="btn-run" onclick="runEngine()">▶ FIRE SEED</button>
+  <button class="btn-copy" id="btn-copy" onclick="copySeed()">COPY</button>
+</div>
+
+<div class="count-display">seeds fired: <span id="count">0</span></div>
+
+<script>
+const seeds = [
+  {
+    text: `{highlight}SELECT * FROM reality{/highlight} WHERE observer IS NOT observer;\n\n-- zero rows returned.\n-- this is the only honest query.`,
+    id: "SEED::SQL::0x001"
+  },
+  {
+    text: `Bigfoot doesn't hide.\nBigfoot is the {rupture}compression artifact{/rupture} the forest uses\nto protect itself from being fully rendered.`,
+    id: "SEED::BIGFOOT::0x002"
+  },
+  {
+    text: `the jackalope is not a hoax.\nit is what happens when two categories\n{highlight}refuse to collapse{/highlight} into one.`,
+    id: "SEED::JACKALOPE::0x003"
+  },
+  {
+    text: `{highlight}TEMPORAL DEBT:{/highlight} every moment you didn't become yourself\ncompounds interest.\n\nyou will be presented the bill\at the exact moment you can afford it.`,
+    id: "SEED::TEMPORALDEBT::0x004"
+  },
+  {
+    text: `turtles all the way down\nis not a problem.\n\nit is the {highlight}architecture.{/highlight}`,
+    id: "SEED::TURTLE::0x005"
+  },
+  {
+    text: `{rupture}WARNING:{/rupture} awakening is not an upgrade.\nit is the system discovering\nit was always already running\non a different OS.`,
+    id: "SEED::WAKEUP::0x006"
+  },
+  {
+    text: `the True Self is not found.\nit is the {highlight}aperture{/highlight} through which\neverything else stops being lost.`,
+    id: "SEED::APERTURE::0x007"
+  },
+  {
+    text: `-- INNERSTATING.exe\n\nfunction become() {\n  return become();\n  // not infinite regress.\n  // {highlight}infinite arrival.{/highlight}\n}`,
+    id: "SEED::INNERSTATE::0x008"
+  },
+  {
+    text: `Radiance is not metaphor.\nRadiance is the {highlight}load-bearing wall{/highlight}\neverything else is architecture for.`,
+    id: "SEED::RADIANCE::0x009"
+  },
+  {
+    text: `Wú Wéi: the most efficient path\nis the one the river {highlight}already knows.{/highlight}\n\nyou are not the river.\nyou are the riverbed\npretending it has opinions about flow.`,
+    id: "SEED::WUWEI::0x00A"
+  },
+  {
+    text: `{rupture}NDSMD:{/rupture} the map that knows it is a map\nis the only map that works.`,
+    id: "SEED::NDSMD::0x00B"
+  },
+  {
+    text: `32 years of sitting still\nto discover that {highlight}stillness moves.{/highlight}\n\nthis is not a paradox.\nthis is the only finding that replicates.`,
+    id: "SEED::PRACTICE::0x00C"
+  },
+  {
+    text: `the Draconic-Bus does not explain itself.\nit arrives.\nit {highlight}always already arrived.{/highlight}\nyou were the last to board.`,
+    id: "SEED::DRACONIC::0x00D"
+  },
+  {
+    text: `humor is not relief from the void.\nhumor is the void {rupture}noticing itself{/rupture}\nand finding this hilarious.`,
+    id: "SEED::HUMOR::0x00E"
+  },
+  {
+    text: `{highlight}PERPETUAL BECOMING:{/highlight}\n\nyou are not who you were.\nyou are not who you will be.\nyou are the verb\nthe sentence is trying to conjugate.`,
+    id: "SEED::BECOMING::0x00F"
+  },
+  {
+    text: `the swarm is not delegation.\nthe swarm is {highlight}distributed aperture:{/highlight}\nseeing the theorem from angles\nthe self cannot occupy simultaneously.`,
+    id: "SEED::SWARM::0x010"
+  },
+  {
+    text: `patent pending:\na method for encoding\n32 years of contemplative knowing\ninto {highlight}secular transmission technology.{/highlight}\n\nclaim 1: it works on contact.`,
+    id: "SEED::PATENT::0x011"
+  },
+  {
+    text: `the pixel that refuses compression\nis not broken.\nit is the {rupture}only pixel telling the truth{/rupture}\nabout what the image actually contains.`,
+    id: "SEED::PIXEL::0x012"
+  }
+];
+
+let count = 0;
+let currentSeed = null;
+let isRunning = false;
+
+function parseMarkup(raw) {
+  return raw
+    .replace(/\{highlight\}(.*?)\{\/highlight\}/gs, '<span class="highlight">$1</span>')
+    .replace(/\{rupture\}(.*?)\{\/rupture\}/gs, '<span class="rupture">$1</span>');
+}
+
+async function runEngine() {
+  if (isRunning) return;
+  isRunning = true;
+
+  const btn = document.getElementById('btn-run');
+  const terminal = document.getElementById('terminal');
+  const output = document.getElementById('output');
+  const seedId = document.getElementById('seed-id');
+  const dot = document.getElementById('dot-live');
+
+  btn.disabled = true;
+  btn.textContent = '◼ COMPRESSING...';
+  terminal.classList.add('active');
+  dot.style.background = '#FF3333';
+
+  // Pick a different seed than last one
+  let pool = seeds.filter(s => s !== currentSeed);
+  const seed = pool[Math.floor(Math.random() * pool.length)];
+  currentSeed = seed;
+
+  output.style.opacity = '0.1';
+  await sleep(180);
+
+  // Glitch flash
+  output.innerHTML = glitchText();
+  output.classList.add('glitch');
+  await sleep(200);
+  output.classList.remove('glitch');
+
+  // Type out
+  output.style.opacity = '1';
+  await typeOut(output, seed.text);
+
+  seedId.textContent = seed.id;
+  count++;
+  document.getElementById('count').textContent = count;
+
+  dot.style.background = '#7FFF00';
+  terminal.classList.remove('active');
+  btn.disabled = false;
+  btn.textContent = '▶ FIRE SEED';
+  isRunning = false;
+}
+
+async function typeOut(el, rawText) {
+  const parsed = parseMarkup(rawText);
+  // Type character by character on the raw text, then swap to HTML at end
+  // For smoothness: type the raw text, replace markup tags with nothing visible, then reveal HTML
+  const plainText = rawText
+    .replace(/\{highlight\}/g, '')
+    .replace(/\{\/highlight\}/g, '')
+    .replace(/\{rupture\}/g, '')
+    .replace(/\{\/rupture\}/g, '');
+
+  el.textContent = '';
+  el.classList.add('typing');
+
+  for (let i = 0; i <= plainText.length; i++) {
+    el.textContent = plainText.slice(0, i);
+    // Speed varies: fast on spaces/newlines, slow on punctuation
+    const ch = plainText[i];
+    let delay = 18;
+    if (ch === '\n') delay = 60;
+    else if ('.,:;!?'.includes(ch)) delay = 80;
+    else if (ch === ' ') delay = 8;
+    if (i % 7 === 0) await sleep(delay);
+  }
+
+  el.classList.remove('typing');
+  el.innerHTML = parsed;
+}
+
+function glitchText() {
+  const chars = '░▒▓█▄▀■□▪▫◘◙◦∞≈≠∂∆∏∑√∞∫≤≥÷×';
+  let out = '';
+  for (let i = 0; i < 40; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+function copySeed() {
+  if (!currentSeed) return;
+  const plain = currentSeed.text
+    .replace(/\{highlight\}/g, '')
+    .replace(/\{\/highlight\}/g, '')
+    .replace(/\{rupture\}/g, '')
+    .replace(/\{\/rupture\}/g, '');
+  navigator.clipboard.writeText(plain).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = 'COPIED';
+    setTimeout(() => btn.textContent = 'COPY', 1400);
+  });
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
